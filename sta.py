@@ -281,8 +281,16 @@ def cli(input_file, output_file, file_format, query):
         # (2) .. abort execution
         click.Context.exit(0)
 
+    # If file format is invalid ..
+    if file_format.lower() not in ['csv', 'json', 'ics']:
+        # (1) .. report falling back
+        click.echo('Invalid file format "{}", falling back to "csv".')
+
+        # (2) .. actually fall back
+        file_format = 'csv'
+
     # Build filename of output file
-    output_file = '{}.{}'.format(output_file, file_format)
+    output_file = '{}.{}'.format(output_file.lower(), file_format)
 
     # Create output path
     create_path(output_file)
