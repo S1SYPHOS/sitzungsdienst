@@ -6,7 +6,6 @@ import datetime
 import operator
 
 import click
-import PyPDF2
 
 
 def create_path(path: str) -> None:
@@ -57,6 +56,9 @@ def hash(item: dict) -> str:
 
 
 def process(pdf_file: str) -> list:
+    # Import library
+    import PyPDF2
+
     # Create page data array
     pages = []
 
@@ -269,11 +271,12 @@ def dump_ics(data: list, ics_file: str) -> None:
 @click.command()
 @click.option('-i', '--input-file', type=click.Path(True), help='Path to PDF input file.')
 @click.option('-o', '--output-file', default='data', type=click.Path(), help='Output filename, without extension.')
+@click.option('-d', '--directory', type=click.Path(False), default='dist', help='Output directory.')
 @click.option('-f', '--file-format', default='csv', help='File format, "csv", "json" or "ics".')
 @click.option('-q', '--query', multiple=True, help='Query assignees, eg for name, department.')
 @click.option('--verbose', '-v', is_flag=True, help='Enable verbose mode.')
 @click.version_option('1.1.0')
-def cli(input_file, output_file, file_format, query, verbose):
+def cli(input_file, output_file, directory, file_format, query, verbose):
     # If no input file provided ..
     if not input_file:
         # (1) .. report reason
@@ -289,12 +292,6 @@ def cli(input_file, output_file, file_format, query, verbose):
 
         # (2) .. actually fall back
         file_format = 'csv'
-
-    # Build output filename
-    output_file = '{}.{}'.format(output_file.lower(), file_format)
-
-    # Create output path
-    create_path(output_file)
 
     # Process data
     data = process(input_file)
@@ -317,6 +314,12 @@ def cli(input_file, output_file, file_format, query, verbose):
 
         # Report back
         click.echo(' done.')
+
+    # Build output path
+    output_file = os.path.join(directory, '{}.{}'.format(output_file.lower(), file_format))
+
+    # Create output path (if necessary)
+    create_path(output_file)
 
     # Report saving the file
     click.echo('Saving file as "{}" ..'.format(output_file), nl=False)
