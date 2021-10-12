@@ -1,18 +1,12 @@
 import os
 import re
 import json
+import hashlib
+import datetime
 import operator
 
-from datetime import datetime, timedelta
-from hashlib import md5
-
 import click
-import pandas
-import pytz
-
-from ics import Calendar, Event
-from PyPDF2 import PdfFileReader
-from PyPDF2.utils import PdfReadError
+import PyPDF2
 
 
 def create_path(path: str) -> None:
@@ -59,7 +53,7 @@ def is_person(string: str) -> bool:
 
 
 def hash(item: dict) -> str:
-    return md5(json.dumps(item).encode('utf-8')).hexdigest()
+    return hashlib.md5(json.dumps(item).encode('utf-8')).hexdigest()
 
 
 def process(pdf_file: str) -> list:
@@ -68,7 +62,7 @@ def process(pdf_file: str) -> list:
 
     # Fetch content from PDF file
     with open(pdf_file, 'rb') as file:
-        for page in PdfFileReader(file).pages:
+        for page in PyPDF2.PdfFileReader(file).pages:
             pages.append([text.strip() for text in page.extractText().splitlines() if text])
 
     # Create source data array
@@ -225,9 +219,56 @@ def process(pdf_file: str) -> list:
     return sorted(data, key=operator.itemgetter('date', 'who', 'when', 'where', 'what'))
 
 
+def dump_csv(data: list, csv_file: str) -> None:
+    # Import library
+    import pandas
+
+    # Write data to CSV file
+    dataframe = pandas.DataFrame(data)
+    dataframe.to_csv(csv_file, index=False)
+
+
+def dump_json(data: list, json_file: str) -> None:
+    # Write data to JSON file
+    with open(json_file, 'w') as file:
+        json.dump(data, file, ensure_ascii=False, indent=4)
+
+
+def dump_ics(data: list, ics_file: str) -> None:
+    # Import libraries
+    import ics
+    import pytz
+
+    # Create calendar object
+    calendar = ics.Calendar(creator='S1SYPHOS')
+
+    # Iterate over items
+    for item in data:
+        # Build event object
+        # (1) Define basic information
+        uid = hash(item)
+        name = 'Sitzungsdienst ({})'.format(item['what'])
+        location = item['where']
+
+        # (2) Define timezone, date & times
+        time = datetime.datetime.strptime(item['date'] + item['when'], '%Y-%m-%d%H:%M')
+        begin = time.replace(tzinfo=pytz.timezone('Europe/Berlin'))
+        end = begin + datetime.timedelta(hours=1)
+
+        # (3) Create event
+        event = ics.Event(name=name, begin=begin, end=end, uid=uid, location=location)
+
+        # Add event to calendar
+        calendar.events.add(event)
+
+    # Write calendar object to ICS file
+    with open(ics_file, 'w') as file:
+        file.writelines(calendar)
+
+
 @click.command()
 @click.option('-i', '--input-file', type=click.Path(True), help='Path to PDF input file.')
-@click.option('-o', '--output-file', default='csv', type=click.Path(), help='Output filename, without extension.')
+@click.option('-o', '--output-file', default='data', type=click.Path(), help='Output filename, without extension.')
 @click.option('-f', '--file-format', default='csv', help='File format, "csv", "json" or "ics".')
 @click.option('-q', '--query', multiple=True, help='Filter assignees, eg by name or department.')
 @click.version_option('1.0.0')
@@ -249,10 +290,10 @@ def cli(input_file, output_file, file_format, query):
     # Process data
     data = process(input_file)
 
-    # If query is present ..
+    # If query is present, filter data
     if query:
-        # .. filter data
-        click.echo('Query data for "{}"'.format(query))
+        # Report filtering
+        click.echo('Query data for "{}" ..'.format(query), nl=False)
 
         # Create data buffer
         buffer = []
@@ -265,49 +306,27 @@ def cli(input_file, output_file, file_format, query):
         # Apply data buffer
         data = buffer
 
+        # Report back
+        click.echo(' done!')
+
     # Report saving the file
     click.echo('Save file as "{}" ..'.format(output_file), nl=False)
 
     # Write data as ..
-    if file_format == 'json':
-        # (1) .. JSON
-        with open(output_file, 'w') as file:
-            json.dump(data, file, ensure_ascii=False, indent=4)
-
     if file_format == 'csv':
-        # (2) .. CSV
-        df = pandas.DataFrame(data)
-        df.to_csv(output_file, index=False)
+        # (1) .. CSV
+        dump_csv(data, output_file)
+
+    if file_format == 'json':
+        # (2) .. JSON
+        dump_json(data, output_file)
 
     if file_format == 'ics':
         # (3) .. ICS
-        calendar = Calendar(creator='S1SYPHOS')
-
-        # Iterate over items
-        for item in data:
-            # Build event
-            # (1) Define basic information
-            uid = hash(item)
-            name = 'Sitzungsdienst ({})'.format(item['what'])
-            location = item['where']
-
-            # (2) Define timezone, date & times
-            time = datetime.strptime(item['date'] + item['when'], '%Y-%m-%d%H:%M')
-            begin = time.replace(tzinfo=pytz.timezone('Europe/Berlin'))
-            end = begin + timedelta(hours=1)
-
-            # (3) Create event
-            event = Event(name=name, begin=begin, end=end, uid=uid, location=location)
-
-            # Add event to calendar
-            calendar.events.add(event)
-
-        # Write calendar to file
-        with open(output_file, 'w') as file:
-            file.writelines(calendar)
+        dump_ics(data, output_file)
 
     # Report back
-    click.echo('Saved file as "{}"'.format(output_file))
+    click.echo(' done!')
 
 
 if __name__ == '__main__':
