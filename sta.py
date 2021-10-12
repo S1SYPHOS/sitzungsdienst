@@ -276,7 +276,7 @@ def cli(input_file, output_file, file_format, query):
     # If no input file provided ..
     if not input_file:
         # (1) .. report reason
-        click.echo('Please provide input file!')
+        click.echo('No input file specified, aborting ..')
 
         # (2) .. abort execution
         click.Context.exit(0)
@@ -284,12 +284,12 @@ def cli(input_file, output_file, file_format, query):
     # If file format is invalid ..
     if file_format.lower() not in ['csv', 'json', 'ics']:
         # (1) .. report falling back
-        click.echo('Invalid file format "{}", falling back to "csv".')
+        click.echo('Invalid file format "{}", falling back to "csv".'.format(file_format))
 
         # (2) .. actually fall back
         file_format = 'csv'
 
-    # Build filename of output file
+    # Build output filename
     output_file = '{}.{}'.format(output_file.lower(), file_format)
 
     # Create output path
@@ -301,7 +301,7 @@ def cli(input_file, output_file, file_format, query):
     # If query is present, filter data
     if query:
         # Report filtering
-        click.echo('Query data for "{}" ..'.format(query), nl=False)
+        click.echo('Querying data for "{}" ..'.format(query), nl=False)
 
         # Create data buffer
         buffer = []
@@ -315,10 +315,10 @@ def cli(input_file, output_file, file_format, query):
         data = buffer
 
         # Report back
-        click.echo(' done!')
+        click.echo(' done.')
 
     # Report saving the file
-    click.echo('Save file as "{}" ..'.format(output_file), nl=False)
+    click.echo('Saving file as "{}" ..'.format(output_file), nl=False)
 
     # Write data as ..
     if file_format == 'csv':
@@ -334,7 +334,7 @@ def cli(input_file, output_file, file_format, query):
         dump_ics(data, output_file)
 
     # Report back
-    click.echo(' done!')
+    click.echo(' done.')
 
 
 if __name__ == '__main__':
