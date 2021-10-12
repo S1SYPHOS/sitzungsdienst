@@ -270,9 +270,10 @@ def dump_ics(data: list, ics_file: str) -> None:
 @click.option('-i', '--input-file', type=click.Path(True), help='Path to PDF input file.')
 @click.option('-o', '--output-file', default='data', type=click.Path(), help='Output filename, without extension.')
 @click.option('-f', '--file-format', default='csv', help='File format, "csv", "json" or "ics".')
-@click.option('-q', '--query', multiple=True, help='Filter assignees, eg by name or department.')
+@click.option('-q', '--query', multiple=True, help='Query assignees, eg for name, department.')
+@click.option('--verbose', '-v', is_flag=True, help='Enable verbose mode.')
 @click.version_option('1.1.0')
-def cli(input_file, output_file, file_format, query):
+def cli(input_file, output_file, file_format, query, verbose):
     # If no input file provided ..
     if not input_file:
         # (1) .. report reason
@@ -335,6 +336,30 @@ def cli(input_file, output_file, file_format, query):
 
     # Report back
     click.echo(' done.')
+
+    # If verbose mode is activated ..
+    if verbose:
+        # Add newline
+        click.echo()
+
+        # .. print results, consisting of ..
+        # (1) .. date range
+        click.echo('Zeitraum: {} - {}'.format(data[0]['date'], data[-1]['date']))
+
+        # Add newline before first entry
+        click.echo()
+
+        # (2) .. data entries, namely ..
+        for index, item in enumerate(data):
+            # (a) .. entry number
+            click.echo('Eintrag {}:'.format(index + 1))
+
+            # (b) .. its key-value pairs
+            for key, value in item.items():
+                click.echo('{}: {}'.format(key, value))
+
+            # Add newline before each subsequent entry
+            click.echo()
 
 
 if __name__ == '__main__':
