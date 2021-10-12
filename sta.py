@@ -298,8 +298,16 @@ def cli(input_file, output_file, directory, file_format, query, verbose):
 
     # If query is present, filter data
     if query:
-        # Report filtering
-        click.echo('Querying data for "{}" ..'.format(query), nl=False)
+        # Make report on query human-readable
+        # (1) Build list of verbose search terms
+        query_report = ['{}) {}'.format(index + 1, term) for index, term in enumerate(query)]
+
+        # (2) Simplify report for single term
+        if len(query_report) == 1:
+            query_report = ['"{}"'.format(query[0])]
+
+        # (3) Report filtering
+        click.echo('Querying data for {} ..'.format(' '.join(query_report)), nl=False)
 
         # Create data buffer
         buffer = []
