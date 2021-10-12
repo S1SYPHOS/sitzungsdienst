@@ -226,12 +226,12 @@ def process(pdf_file: str) -> list:
 
 
 @click.command()
-@click.version_option('1.0.0')
 @click.option('-i', '--input-file', type=click.Path(True), help='Path to PDF input file.')
 @click.option('-o', '--output-file', default='csv', type=click.Path(), help='Output filename, without extension.')
 @click.option('-f', '--file-format', default='csv', help='File format, "csv", "json" or "ics".')
-@click.option('-q', '--query', help='Filter people, eg by name or department.')
-def cli(input_file, output_file, file_format, user, department):
+@click.option('-q', '--query', multiple=True, help='Filter assignees, eg by name or department.')
+@click.version_option('1.0.0')
+def cli(input_file, output_file, file_format, query):
     # If no input file provided ..
     if not input_file:
         # (1) .. report reason
@@ -249,16 +249,24 @@ def cli(input_file, output_file, file_format, user, department):
     # Process data
     data = process(input_file)
 
-    # If present, filter data by ..
-    if user:
-        # (1) .. user
-        click.echo('Applied filter for user "{}"'.format(user))
-        data = [item for item in data if user in item['who']]
+    # If query is present ..
+    if query:
+        # .. filter data
+        click.echo('Query data for "{}"'.format(query))
 
-    if department:
-        # (1) .. department
-        click.echo('Applied filter for department "{}"'.format(department))
-        data = [item for item in data if department in item['who']]
+        # Create data buffer
+        buffer = []
+
+        # Loop over search terms in order to ..
+        for term in query:
+            # .. filter out relevant items
+            buffer += [item for item in data if term.lower() in item['who'].lower()]
+
+        # Apply data buffer
+        data = buffer
+
+    # Report saving the file
+    click.echo('Save file as "{}" ..'.format(output_file), nl=False)
 
     # Write data as ..
     if file_format == 'json':
