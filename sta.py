@@ -275,7 +275,7 @@ def dump_ics(data: list, ics_file: str) -> None:
 @click.option('-f', '--file-format', default='csv', help='File format, "csv", "json" or "ics".')
 @click.option('-q', '--query', multiple=True, help='Query assignees, eg for name, department.')
 @click.option('--verbose', '-v', is_flag=True, help='Enable verbose mode.')
-@click.version_option('1.1.0')
+@click.version_option('1.2.0')
 def cli(input_file, output_file, directory, file_format, query, verbose):
     # If no input file provided ..
     if not input_file:
