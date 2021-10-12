@@ -29,6 +29,7 @@ Usage: sta.py [OPTIONS]
 Options:
   -i, --input-file PATH   Path to PDF input file.
   -o, --output-file PATH  Output filename, without extension.
+  -d, --directory PATH    Output directory.
   -f, --file-format TEXT  File format, "csv", "json" or "ics".
   -q, --query TEXT        Query assignees, eg for name, department.
   -v, --verbose           Enable verbose mode.
