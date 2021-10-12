@@ -27,11 +27,11 @@ $ python sta.py --help
 Usage: sta.py [OPTIONS]
 
 Options:
-  --version               Show the version and exit.
   -i, --input-file PATH   Path to PDF input file.
   -o, --output-file PATH  Output filename, without extension.
   -f, --file-format TEXT  File format, "csv", "json" or "ics".
-  -q, --query TEXT        Filter people, eg by name or department.
+  -q, --query TEXT        Filter assignees, eg by name or department.
+  --version               Show the version and exit.
   --help                  Show this message and exit.
 ```
 
