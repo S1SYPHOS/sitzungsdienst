@@ -177,8 +177,13 @@ def process(pdf_file: BufferedReader) -> list:
                 if not appointments:
                     continue
 
+                # Create data buffer
+                buffer = []
+
+                # Create location array
+                where = []
+
                 for appointment in appointments:
-                    where = []
                     when  = ''
                     what  = ''
                     who   = []
@@ -186,15 +191,19 @@ def process(pdf_file: BufferedReader) -> list:
                     start, end = appointment
 
                     for i in range(start, end):
+                        # Parse strings, which are either ..
+                        # (1) .. time
                         if is_time(entry[i]):
                             # Apply findings
                             when = entry[i]
 
-                        if is_docket(entry[i]):
+                        # (2) .. docket number
+                        elif is_docket(entry[i]):
                             # Apply findings
                             what = entry[i]
 
-                        if is_person(entry[i]):
+                        # (3) .. person
+                        elif is_person(entry[i]):
                             # If entry before this one is no docket ..
                             if not is_docket(entry[i - 1]):
                                 # .. add it
@@ -203,21 +212,35 @@ def process(pdf_file: BufferedReader) -> list:
                             # Add current entry
                             who.append(entry[i])
 
-                        if not when + what:
-                            # Apply findings
-                            where.append(entry[i])
-
-                            # Proceed to next entry
-                            continue
+                        # (4) .. something else
+                        else:
+                            # If next entry is not a person ..
+                            if not is_person(entry[i + 1]):
+                                # .. treat current entry as
+                                where.append(entry[i])
 
                     # Combine & store results
-                    data.append({
+                    buffer.append({
                         'date': reverse_date(date),
                         'when': when,
                         'who': reverse_person(' '.join(who)),
-                        'where': ' '.join([words.replace(' ,', '')] + where),
+                        'where': '',
                         'what': what,
                     })
+
+                    # On last appointment ..
+                    if appointment == appointments[-1]:
+                        # .. iterate over buffer items and ..
+                        for item in buffer:
+                            # (1) .. apply location
+                            item['where'] = ' '.join([words.replace(' ,', '')] + where)
+
+                            # (2) .. add it to data array
+                            data.append(item)
+
+                        # Reset buffer & location
+                        buffer = []
+                        where = []
 
     return sorted(data, key=operator.itemgetter('date', 'who', 'when', 'where', 'what'))
 
