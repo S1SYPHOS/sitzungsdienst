@@ -5,6 +5,8 @@ import hashlib
 import datetime
 import operator
 
+from io import BufferedReader
+
 import click
 
 
@@ -55,7 +57,7 @@ def hash(item: dict) -> str:
     return hashlib.md5(json.dumps(item).encode('utf-8')).hexdigest()
 
 
-def process(pdf_file: str) -> list:
+def process(pdf_file: BufferedReader) -> list:
     # Import library
     import PyPDF2
 
@@ -63,9 +65,8 @@ def process(pdf_file: str) -> list:
     pages = []
 
     # Fetch content from PDF file
-    with open(pdf_file, 'rb') as file:
-        for page in PyPDF2.PdfFileReader(file).pages:
-            pages.append([text.strip() for text in page.extractText().splitlines() if text])
+    for page in PyPDF2.PdfFileReader(pdf_file).pages:
+        pages.append([text.strip() for text in page.extractText().splitlines() if text])
 
     # Create source data array
     source = {}
@@ -269,21 +270,15 @@ def dump_ics(data: list, ics_file: str) -> None:
 
 
 @click.command()
-@click.option('-i', '--input-file', type=click.Path(True), help='Path to PDF input file.')
+@click.argument('input-file', type=click.File('rb'))
 @click.option('-o', '--output-file', default='data', type=click.Path(), help='Output filename, without extension.')
-@click.option('-d', '--directory', type=click.Path(False), default='dist', help='Output directory.')
+@click.option('-d', '--directory', default='dist', help='Output directory.')
 @click.option('-f', '--file-format', default='csv', help='File format, "csv", "json" or "ics".')
 @click.option('-q', '--query', multiple=True, help='Query assignees, eg for name, department.')
 @click.option('--verbose', '-v', is_flag=True, help='Enable verbose mode.')
 @click.version_option('1.2.0')
-def cli(input_file, output_file, directory, file_format, query, verbose):
-    # If no input file provided ..
-    if not input_file:
-        # (1) .. report reason
-        click.echo('No input file specified, aborting ..')
-
-        # (2) .. abort execution
-        click.Context.exit(0)
+def cli(input_file: BufferedReader, output_file: str, directory: str, file_format: str, query: str, verbose: bool) -> None:
+    """Extract weekly assignments from INPUT_FILE."""
 
     # If file format is invalid ..
     if file_format.lower() not in ['csv', 'json', 'ics']:
