@@ -10,28 +10,6 @@ from io import BufferedReader
 import click
 
 
-def create_path(path: str) -> None:
-    # Determine if (future) target is appropriate data file
-    if os.path.splitext(path)[1].lower() in ['.csv', '.json', '.ics']:
-        path = os.path.dirname(path)
-
-    if not os.path.exists(path):
-        try:
-            os.makedirs(path)
-
-        # Guard against race condition
-        except OSError:
-            pass
-
-
-def reverse_date(string: str, separator: str='-') -> str:
-    return separator.join(reversed(string.split('.')))
-
-
-def reverse_person(string: str) -> str:
-    return ' '.join(reversed([string.strip() for string in string.split(',')]))
-
-
 def is_time(string: str) -> bool:
     if re.match(r'\d{2}:\d{2}', string):
         return True
@@ -47,14 +25,62 @@ def is_docket(string: str) -> bool:
 
 
 def is_person(string: str) -> bool:
-    if re.search(r'E?(?:O?StA|OAA)|Ref(?:\'in)?', string):
+    if re.search(r'(?:E?(?:O?StA|OAA)|Ref)(?:\'in)?', string):
         return True
 
     return False
 
 
-def hash(item: dict) -> str:
-    return hashlib.md5(json.dumps(item).encode('utf-8')).hexdigest()
+def reverse_date(string: str, separator: str='-') -> str:
+    return separator.join(reversed(string.split('.')))
+
+
+def format_person(data: list) -> str:
+    # Form complete string
+    string = ' '.join(data)
+
+    people = []
+
+    # Create people buffer
+    buffer = []
+
+    for text in string.split(','):
+        # Remove whitespaces
+        text = text.strip()
+
+        # Look for title
+        title = re.search(r'\b((?:E?(?:O?StA|OAA)|Ref)(?:\'in)?)\b', text)
+
+        # Check whether text block contains title which
+        # indicates last text block for current person
+        if title:
+            # Iterate over buffer items
+            for index, item in enumerate(buffer):
+                # If person has PhD ..
+                if 'Dr.' in item:
+                    # (1) .. remove it from current string
+                    buffer[index] = item.replace('Dr.', '')
+
+                    # (2) .. add PhD to buffer at proper position
+                    buffer.append('Dr.')
+
+                    # Abort iteration
+                    break
+
+            # Add title to buffer
+            buffer.append(title[1])
+
+            # Build proper name from it
+            people.append(' '.join(reversed([item.strip() for item in buffer if item])))
+
+            # Reset buffer, but keep the rest of the string
+            buffer = [text.replace(title[1], '')]
+
+        # .. otherwise ..
+        else:
+            buffer.append(text)
+
+    return '; '.join(people)
 
 
 def process(pdf_file: BufferedReader) -> list:
@@ -223,7 +249,7 @@ def process(pdf_file: BufferedReader) -> list:
                     buffer.append({
                         'date': reverse_date(date),
                         'when': when,
-                        'who': reverse_person(' '.join(who)),
+                        'who': format_person(who),
                         'where': '',
                         'what': what,
                     })
@@ -245,6 +271,20 @@ def process(pdf_file: BufferedReader) -> list:
     return sorted(data, key=operator.itemgetter('date', 'who', 'when', 'where', 'what'))
 
 
+def create_path(path: str) -> None:
+    # Determine if (future) target is appropriate data file
+    if os.path.splitext(path)[1].lower() in ['.csv', '.json', '.ics']:
+        path = os.path.dirname(path)
+
+    if not os.path.exists(path):
+        try:
+            os.makedirs(path)
+
+        # Guard against race condition
+        except OSError:
+            pass
+
+
 def dump_csv(data: list, csv_file: str) -> None:
     # Import library
     import pandas
@@ -258,6 +298,10 @@ def dump_json(data: list, json_file: str) -> None:
     # Write data to JSON file
     with open(json_file, 'w') as file:
         json.dump(data, file, ensure_ascii=False, indent=4)
+
+
+def hash(item: dict) -> str:
+    return hashlib.md5(json.dumps(item).encode('utf-8')).hexdigest()
 
 
 def dump_ics(data: list, ics_file: str) -> None:
@@ -283,6 +327,9 @@ def dump_ics(data: list, ics_file: str) -> None:
 
         # (3) Create event
         event = ics.Event(name=name, begin=begin, end=end, uid=uid, location=location)
+
+        # (4) Add person as attendee
+        event.add_attendee(item['who'])
 
         # Add event to calendar
         calendar.events.add(event)
