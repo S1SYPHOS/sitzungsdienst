@@ -212,19 +212,19 @@ class Sitzungsdienst:
                         continue
 
                     # Create data buffer
-                    buffer = []
+                    essentials = []
 
-                    # Create location array
+                    # Create buffer for place & assignee(s)
                     where = []
+                    who   = []
 
+                    # Iterate over indices of each appointment
                     for appointment in appointments:
+                        # Create buffer for time & docket number
                         when  = ''
                         what  = ''
-                        who   = []
 
-                        start, end = appointment
-
-                        for i in range(start, end):
+                        for i in range(appointment[0], appointment[1]):
                             # Parse strings, which are either ..
                             # (1) .. time
                             if self.is_time(entry[i]):
@@ -253,39 +253,29 @@ class Sitzungsdienst:
                                     # .. treat current entry as
                                     where.append(entry[i])
 
-                        # Combine & store results
-                        buffer.append({
+                        # If time & docket number are specified ..
+                        if when + what:
+                            # (1) .. add them to the buffer
+                            essentials.append((when, what, who))
+
+                            # (2) .. reset assignee(s)
+                            who = []
+
+                        # .. otherwise instead of creating an empty entry ..
+                        else:
+                            # .. add assignee to last entry
+                            essentials[-1] = list(essentials[-1])[:-1] + [who]
+
+                    # Iterate over result in order to ..
+                    for item in essentials:
+                        # .. combine & store them
+                        data.append({
                             'date': self.reverse_date(date),
-                            'when': when,
-                            'who': self.format_person(who),
-                            'where': '',
-                            'what': what,
+                            'when': item[0],
+                            'who': self.format_person(item[2]),
+                            'where': ' '.join([words.replace(' ,', '')] + where),
+                            'what': item[1],
                         })
-
-                        # On last appointment ..
-                        if appointment == appointments[-1]:
-                            # .. iterate over buffer items and ..
-                            for item in buffer:
-                                # (1) .. apply location
-                                item['where'] = ' '.join([words.replace(' ,', '')] + where)
-
-                                # (2) .. add it to data array
-                                data.append(item)
-
-                            # Reset buffer & location
-                            buffer = []
-                            where = []
-
-        # Monkeypatch issue where two assignees result in two entries where ..
-        for index, item in enumerate(data):
-            # .. one contains empty fields for time & docket number
-            # .. one contains incorrect assignees
-            if not item['when'] and not item['what']:
-                # (1) Transfer mising information
-                data[index - 1]['who'] = item['who']
-
-                # (2) Remove incomplete entry
-                del data[index]
 
         return sorted(data, key=itemgetter('date', 'who', 'when', 'where', 'what'))
 
