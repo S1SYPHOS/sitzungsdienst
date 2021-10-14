@@ -11,6 +11,137 @@ class Sitzungsdienst:
         self.data = self.extract_data(input_file)
 
 
+    def process_pages(self, pages: list) -> dict:
+        # Create data array
+        data = {}
+
+        # Initialize weekday buffer
+        date = None
+
+        # Extract data
+        for page in pages:
+            # Reset mode
+            is_live = False
+
+            for index, text in enumerate(page):
+                # Determine starting point ..
+                if text == 'Anfahrt':
+                    is_live = True
+
+                    # .. and proceed with next entry
+                    continue
+
+                # Determine terminal point ..
+                if text == 'Seite':
+                    is_live = False
+
+                    # .. and proceed with next entry
+                    continue
+
+                # Enforce entries between starting & terminal point
+                if not is_live or 'Ende der Auflistung' in text:
+                    continue
+
+                # Determine current date / weekday
+                if text in ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag']:
+                    date = page[index + 1]
+
+                    if date not in data:
+                        data[date] = []
+
+                    # Proceed with next entry
+                    continue
+
+                # Proceed with next entry if it indicates ..
+                # (1) .. current date
+                if text == date:
+                    continue
+
+                # (2) .. follow-up appointment for main trial
+                if text in ['F', '+']:
+                    continue
+
+                data[date].append(text)
+
+        return data
+
+
+    def process_data(self, source: dict) -> list:
+        # Create data array
+        unprocessed = []
+
+        # Iterate over source data
+        for date, raw in source.items():
+            buffer = []
+            court  = ''
+
+            # Iterate over text blocks
+            for index, text in enumerate(raw):
+                if self.is_court(text):
+                    court = text
+
+                else:
+                    buffer.append(text)
+
+                if index == len(raw) - 1 or self.is_court(raw[index + 1]):
+                    unprocessed.append({
+                        'date': date,
+                        'court': court,
+                        'data': buffer,
+                    })
+
+                    # Reset buffer
+                    buffer = []
+
+        # Create data array
+        processed = []
+
+        for item in unprocessed:
+            events = []
+
+            # Set index of last entry
+            last_index = 0
+
+            for index, text in enumerate(item['data']):
+                # Upon first entry ..
+                if index == 0:
+                    # .. reset index
+                    last_index = 0
+
+                # Detect every ..
+                #
+                # (1) .. (Erste:r) Oberamtsanwalt / -anwältin
+                # - EOAA / EOAA'in
+                # - OAA / OAA'in
+                #
+                # (2) .. (Erste:r / Ober-) Staatsanwalt / -anwältin
+                # - OStA / OStA'in
+                # - EStA / EStA'in
+                # - StA / StA'in
+                #
+                # (3) .. Rechtsreferendar:in
+                # - Ref / Ref'in
+                if self.is_person(text):
+                    # Determine current appointment
+                    events.append((last_index, index + 1))
+
+                    # Adjust position of last index
+                    last_index = index + 1
+
+            # Skip events without assignee
+            if not events:
+                continue
+
+            processed.append({
+                'date': item['date'],
+                'court': item['court'],
+                'events': events,
+                'infos': item['data'],
+            })
+
+        return processed
+
+
     def is_court(self, string: str) -> bool:
         if match(r'(?:AG|LG)\s', string):
             return True
@@ -102,180 +233,78 @@ class Sitzungsdienst:
         for page in PyPDF2.PdfFileReader(pdf_file).pages:
             pages.append([text.strip() for text in page.extractText().splitlines() if text])
 
-        # Create source data array
-        source = {}
-
-        # Initialize weekday buffer
-        date = None
-
-        # Extract source
-        for page in pages:
-            # Reset mode
-            is_live = False
-
-            for index, entry in enumerate(page):
-                # Determine starting point ..
-                if entry == 'Anfahrt':
-                    is_live = True
-
-                    # .. and proceed with next entry
-                    continue
-
-                # Determine terminal point ..
-                if entry == 'Seite':
-                    is_live = False
-
-                    # .. and proceed with next entry
-                    continue
-
-                # Enforce entries between starting & terminal point
-                if not is_live or 'Ende der Auflistung' in entry:
-                    continue
-
-                # Determine current date / weekday
-                if entry in ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag']:
-                    date = page[index + 1]
-
-                    if date not in source:
-                        source[date] = []
-
-                    # Proceed with next entry
-                    continue
-
-                # Proceed with next entry if it indicates ..
-                # (1) .. current date
-                if entry == date:
-                    continue
-
-                # (2) .. follow-up appointment for main trial
-                if entry in ['F', '+']:
-                    continue
-
-                source[date].append(entry)
-
         # Create data array
         data = []
 
-        # Convert source to usable data
-        for date, text in source.items():
-            # Iterate over text blocks
-            for index, words in enumerate(text):
-                # Determine index of each milestone
-                if self.is_court(words):
-                    entry = []
+        # Iterate over processed source data
+        for item in self.process_data(self.process_pages(pages)):
+            # Create data buffer
+            details = []
 
-                    for i in range(1, 50):
-                        try:
-                            string = text[index + i]
+            # Create buffer for place & assignee(s)
+            where = []
+            who   = []
 
-                            # Stop upon reaching the court belonging to the next person
-                            if self.is_court(string):
-                                break
+            # Iterate over indices of each event
+            for event in item['events']:
+                # Create buffer for time & docket number
+                when  = ''
+                what  = ''
 
-                            entry.append(string)
+                for index in range(event[0], event[1]):
+                    entry = item['infos']
 
-                        except IndexError:
-                            break
+                    # Parse strings, which are either ..
+                    # (1) .. time
+                    if self.is_time(entry[index]):
+                        # Apply findings
+                        when = entry[index]
 
-                    appointments = []
+                    # (2) .. docket number
+                    elif self.is_docket(entry[index]):
+                        # Apply findings
+                        what = entry[index]
 
-                    # Set index of last entry
-                    last_index = 0
+                    # (3) .. person
+                    elif self.is_person(entry[index]):
+                        # If entry before this one is no docket ..
+                        if not self.is_docket(entry[index - 1]):
+                            # .. add it
+                            who.append(entry[index - 1])
 
-                    for i, string in enumerate(entry):
-                        # Upon first entry ..
-                        if i == 0:
-                            # .. reset index
-                            last_index = 0
+                        # Add current entry
+                        who.append(entry[index])
 
-                        # Detect every ..
-                        #
-                        # (1) .. (Erste:r) Oberamtsanwalt / -anwältin
-                        # - EOAA / EOAA'in
-                        # - OAA / OAA'in
-                        #
-                        # (2) .. (Erste:r / Ober-) Staatsanwalt / -anwältin
-                        # - OStA / OStA'in
-                        # - EStA / EStA'in
-                        # - StA / StA'in
-                        #
-                        # (3) .. Rechtsreferendar:in
-                        # - Ref / Ref'in
-                        if self.is_person(string):
-                            # Determine current appointment
-                            appointments.append((last_index, i + 1))
+                    # (4) .. something else
+                    else:
+                        # If next entry is not a person ..
+                        if not self.is_person(entry[index + 1]):
+                            # .. treat current entry as
+                            where.append(entry[index])
 
-                            last_index = i + 1
+                # If time & docket number are specified ..
+                if when + what:
+                    # (1) .. add them to the buffer
+                    details.append((when, what, who))
 
-                    # Skip appointments without assignee
-                    if not appointments:
-                        continue
+                    # (2) .. reset assignee(s)
+                    who = []
 
-                    # Create data buffer
-                    essentials = []
+                # .. otherwise instead of creating an empty entry ..
+                else:
+                    # .. add assignee to last entry
+                    details[-1] = list(details[-1])[:-1] + [who]
 
-                    # Create buffer for place & assignee(s)
-                    where = []
-                    who   = []
-
-                    # Iterate over indices of each appointment
-                    for appointment in appointments:
-                        # Create buffer for time & docket number
-                        when  = ''
-                        what  = ''
-
-                        for i in range(appointment[0], appointment[1]):
-                            # Parse strings, which are either ..
-                            # (1) .. time
-                            if self.is_time(entry[i]):
-                                # Apply findings
-                                when = entry[i]
-
-                            # (2) .. docket number
-                            elif self.is_docket(entry[i]):
-                                # Apply findings
-                                what = entry[i]
-
-                            # (3) .. person
-                            elif self.is_person(entry[i]):
-                                # If entry before this one is no docket ..
-                                if not self.is_docket(entry[i - 1]):
-                                    # .. add it
-                                    who.append(entry[i - 1])
-
-                                # Add current entry
-                                who.append(entry[i])
-
-                            # (4) .. something else
-                            else:
-                                # If next entry is not a person ..
-                                if not self.is_person(entry[i + 1]):
-                                    # .. treat current entry as
-                                    where.append(entry[i])
-
-                        # If time & docket number are specified ..
-                        if when + what:
-                            # (1) .. add them to the buffer
-                            essentials.append((when, what, who))
-
-                            # (2) .. reset assignee(s)
-                            who = []
-
-                        # .. otherwise instead of creating an empty entry ..
-                        else:
-                            # .. add assignee to last entry
-                            essentials[-1] = list(essentials[-1])[:-1] + [who]
-
-                    # Iterate over result in order to ..
-                    for item in essentials:
-                        # .. combine & store them
-                        data.append({
-                            'date': self.reverse_date(date),
-                            'when': item[0],
-                            'who': self.format_person(item[2]),
-                            'where': ' '.join([words.replace(' ,', '')] + where),
-                            'what': item[1],
-                        })
+            # Iterate over result in order to ..
+            for detail in details:
+                # .. combine & store them
+                data.append({
+                    'date': self.reverse_date(item['date']),
+                    'when': detail[0],
+                    'who': self.format_person(detail[2]),
+                    'where': ' '.join([item['court'].replace(' ,', '')] + where),
+                    'what': detail[1],
+                })
 
         return sorted(data, key=itemgetter('date', 'who', 'when', 'where', 'what'))
 
@@ -344,4 +373,6 @@ class Sitzungsdienst:
 
 
     def date_range(self) -> tuple:
-        return (self.data[0]['date'], self.data[-1]['date'])
+        data = sorted(self.data, key=itemgetter('date'))
+
+        return (data[0]['date'], data[-1]['date'])
