@@ -11,6 +11,13 @@ class Sitzungsdienst:
         self.data = self.extract_data(input_file)
 
 
+    def is_court(self, string: str) -> bool:
+        if match(r'(?:AG|LG)\s', string):
+            return True
+
+        return False
+
+
     def is_person(self, string: str) -> bool:
         if search(r'(?:E?(?:O?StA|OAA)|Ref)(?:\'in)?', string):
             return True
@@ -154,7 +161,7 @@ class Sitzungsdienst:
             # Iterate over text blocks
             for index, words in enumerate(text):
                 # Determine index of each milestone
-                if match(r'(?:AG|LG)\s', words):
+                if self.is_court(words):
                     entry = []
 
                     for i in range(1, 50):
@@ -162,7 +169,7 @@ class Sitzungsdienst:
                             string = text[index + i]
 
                             # Stop upon reaching the court belonging to the next person
-                            if match(r'(?:AG|LG)\s', string):
+                            if self.is_court(string):
                                 break
 
                             entry.append(string)
