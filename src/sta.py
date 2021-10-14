@@ -1,8 +1,5 @@
 from io import BufferedReader
 from re import match, search
-from json import dump, dumps
-from hashlib import md5
-from datetime import datetime, timedelta
 from operator import itemgetter
 
 
@@ -320,56 +317,6 @@ class Sitzungsdienst:
 
         # Apply data buffer
         return buffer
-
-
-    def dump_csv(self, data: list, csv_file: str) -> None:
-        # Import library
-        import pandas
-
-        # Write data to CSV file
-        dataframe = pandas.DataFrame(data)
-        dataframe.to_csv(csv_file, index=False)
-
-
-    def dump_json(self, data: list, json_file: str) -> None:
-        # Write data to JSON file
-        with open(json_file, 'w') as file:
-            dump(data, file, ensure_ascii=False, indent=4)
-
-
-    def dump_ics(self, data: list, ics_file: str) -> None:
-        # Import libraries
-        import ics
-        import pytz
-
-        # Create calendar object
-        calendar = ics.Calendar(creator='S1SYPHOS')
-
-        # Iterate over items
-        for item in data:
-            # Build event object
-            # (1) Define basic information
-            uid = md5(dumps(item).encode('utf-8')).hexdigest()
-            name = 'Sitzungsdienst ({})'.format(item['what'])
-            location = item['where']
-
-            # (2) Define timezone, date & times
-            time = datetime.strptime(item['date'] + item['when'], '%Y-%m-%d%H:%M')
-            begin = time.replace(tzinfo=pytz.timezone('Europe/Berlin'))
-            end = begin + timedelta(hours=1)
-
-            # (3) Create event
-            event = ics.Event(name=name, begin=begin, end=end, uid=uid, location=location)
-
-            # (4) Add person as attendee
-            event.add_attendee(item['who'])
-
-            # Add event to calendar
-            calendar.events.add(event)
-
-        # Write calendar object to ICS file
-        with open(ics_file, 'w') as file:
-            file.writelines(calendar)
 
 
     def date_range(self) -> tuple:

@@ -4,7 +4,7 @@ from os.path import join
 import click
 
 from src.sta import Sitzungsdienst
-from src.utils import create_path, load_json
+from src.utils import create_path, dump_csv, dump_ics, dump_json, load_json
 
 
 @click.command()
@@ -101,15 +101,15 @@ def cli(source: BufferedReader, output: str, directory: str, file_format: str, q
         # Write data as ..
         if file_format == 'csv':
             # (1) .. CSV
-            sta.dump_csv(data, output_file)
+            dump_csv(data, output_file)
 
         if file_format == 'json':
             # (2) .. JSON
-            sta.dump_json(data, output_file)
+            dump_json(data, output_file)
 
         if file_format == 'ics':
             # (3) .. ICS
-            sta.dump_ics(data, output_file)
+            dump_ics(data, output_file)
 
         # Report back
         click.echo(' done.')
