@@ -48,6 +48,14 @@ def cli(input_file: BufferedReader, output_file: str, directory: str, file_forma
         # Report back
         click.echo(' done.')
 
+    # If results are empty ..
+    if not sta.data:
+        # (1) .. report back
+        click.echo('No results found!')
+
+        # (2) .. abort further execution
+        click.Context.abort('')
+
     # Build output path
     output_file = join(directory, '{}.{}'.format(output_file.lower(), file_format))
 
