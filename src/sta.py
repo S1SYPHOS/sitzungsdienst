@@ -269,6 +269,17 @@ class Sitzungsdienst:
                             buffer = []
                             where = []
 
+        # Monkeypatch issue where two assignees result in two entries where ..
+        for index, item in enumerate(data):
+            # .. one contains empty fields for time & docket number
+            # .. one contains incorrect assignees
+            if not item['when'] and not item['what']:
+                # (1) Transfer mising information
+                data[index - 1]['who'] = item['who']
+
+                # (2) Remove incomplete entry
+                del data[index]
+
         return sorted(data, key=itemgetter('date', 'who', 'when', 'where', 'what'))
 
 
