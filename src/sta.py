@@ -309,7 +309,7 @@ class Sitzungsdienst:
         return sorted(data, key=itemgetter('date', 'who', 'when', 'where', 'what'))
 
 
-    def filter(self, query: list) -> None:
+    def filter(self, query: list) -> list:
         # Create data buffer
         buffer = []
 
@@ -319,25 +319,25 @@ class Sitzungsdienst:
             buffer += [item for item in self.data if term.lower() in item['who'].lower()]
 
         # Apply data buffer
-        self.data = buffer
+        return buffer
 
 
-    def dump_csv(self, csv_file: str) -> None:
+    def dump_csv(self, data: list, csv_file: str) -> None:
         # Import library
         import pandas
 
         # Write data to CSV file
-        dataframe = pandas.DataFrame(self.data)
+        dataframe = pandas.DataFrame(data)
         dataframe.to_csv(csv_file, index=False)
 
 
-    def dump_json(self, json_file: str) -> None:
+    def dump_json(self, data: list, json_file: str) -> None:
         # Write data to JSON file
         with open(json_file, 'w') as file:
-            dump(self.data, file, ensure_ascii=False, indent=4)
+            dump(data, file, ensure_ascii=False, indent=4)
 
 
-    def dump_ics(self, ics_file: str) -> None:
+    def dump_ics(self, data: list, ics_file: str) -> None:
         # Import libraries
         import ics
         import pytz
@@ -346,7 +346,7 @@ class Sitzungsdienst:
         calendar = ics.Calendar(creator='S1SYPHOS')
 
         # Iterate over items
-        for item in self.data:
+        for item in data:
             # Build event object
             # (1) Define basic information
             uid = md5(dumps(item).encode('utf-8')).hexdigest()

@@ -22,21 +22,34 @@ python3 -m pip install -r requirements.txt
 Using this library is straightforward:
 
 ```text
-$ python sta.py --help
+$ python main.py --help
 
-Usage: sta.py [OPTIONS] INPUT_FILE
+Usage: main.py [OPTIONS] INPUT
 
-  Extract weekly assignments from INPUT_FILE.
+  Extract weekly assignments from INPUT file.
 
 Options:
-  -o, --output-file PATH  Output filename, without extension.
-  -d, --directory PATH    Output directory.
-  -f, --file-format TEXT  File format, "csv", "json" or "ics".
-  -q, --query TEXT        Query assignees, eg for name, department.
-  -v, --verbose           Enable verbose mode.
-  --version               Show the version and exit.
-  --help                  Show this message and exit.
+  -o, --output-file PATH    Output filename, without extension.
+  -d, --directory PATH      Output directory.
+  -f, --file-format TEXT    File format, "csv", "json" or "ics".
+  -q, --query TEXT          Query assignees, eg for name, department.
+  -i, --inquiries FILENAME  JSON file with parameters for automation.
+  -v, --verbose             Enable verbose mode.
+  --version                 Show the version and exit.
+  --help                    Show this message and exit.
 ```
 
+The following code snippet provides a **very basic** batch processing example:
+
+```bash
+#!/bin/bash
+
+# Create multiple calendar files at once
+for arg; do
+   python sta.py -i kw42.pdf -f ics -q "$arg" -o "$arg"
+done
+```
+
+Calling this script with something like `bash script.bash alice bob charlie` would give you `alice.ics`, `bob.ics` and `charlie.ics`, each containing their respective assignments.
 
 **Happy coding!**
