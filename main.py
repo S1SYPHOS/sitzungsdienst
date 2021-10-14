@@ -49,13 +49,7 @@ def cli(source: BufferedReader, output: str, directory: str, file_format: str, q
     # If inquiries exist ..
     if inquiries:
         # .. load its content
-        inquiries = load_json(inquiries)
-
-        if inquiries['requests']:
-            requests = inquiries['requests']
-
-        if inquiries['database']:
-            database = inquiries['database']
+        requests = load_json(inquiries)
 
     # Iterate over requests
     for request in requests:

@@ -53,8 +53,22 @@ def dump_json(data: list, json_file: str) -> None:
 
 def dump_ics(data: list, ics_file: str) -> None:
     # Import libraries
+    import os
     import ics
     import pytz
+
+    # Define database file
+    db_file = 'database.json'
+
+    # Create database array
+    database = {}
+
+    # If database file exists ..
+    if os.path.exists(db_file):
+        # open it and ..
+        with open(db_file, 'r') as file:
+            # .. load its contents
+            database = load_json(file)
 
     # Create calendar object
     calendar = ics.Calendar(creator='S1SYPHOS')
@@ -76,7 +90,14 @@ def dump_ics(data: list, ics_file: str) -> None:
         event = ics.Event(name=name, begin=begin, end=end, uid=uid, location=location)
 
         # (4) Add person as attendee
-        event.add_attendee(item['who'])
+        for person in item['who'].split(';'):
+            emails = [email for query, email in database.items() if query in person]
+
+            if emails:
+                attendee = ics.Attendee(emails[0])
+                attendee.common_name = person
+
+                event.add_attendee(attendee)
 
         # Add event to calendar
         calendar.events.add(event)
