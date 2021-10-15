@@ -79,29 +79,37 @@ def dump_ics(data: list, ics_file: str) -> None:
 
     # Iterate over items
     for item in data:
-        # Build event object
-        # (1) Define basic information
-        uid = md5(dumps(item).encode('utf-8')).hexdigest()
-        name = 'Sitzungsdienst ({})'.format(item['what'])
-        location = item['where']
-
-        # (2) Define timezone, date & times
+        # Define timezone, date & times
         time = datetime.strptime(item['date'] + item['when'], '%Y-%m-%d%H:%M')
         begin = time.replace(tzinfo=timezone)
         end = begin + timedelta(hours=1)
 
-        # (3) Create event
-        event = ics.Event(name=name, begin=begin, end=end, uid=uid, created=datetime.now(timezone), location=location)
+        # Create event object
+        event = ics.Event(
+            uid=md5(dumps(item).encode('utf-8')).hexdigest(),
+            name='Sitzungsdienst ({})'.format(item['what']),
+            created=datetime.now(timezone),
+            begin=begin,
+            end=end,
+            location=item['where']
+        )
 
-        # (4) Add person as attendee
+        # Add assignee(s) as attendee(s)
         for person in item['who'].split(';'):
+            # Check database for matching emails
             emails = [email for query, email in database.items() if query in person]
 
-            if emails:
-                attendee = ics.Attendee(emails[0])
-                attendee.common_name = person
+            # Default to empty email, but use first match (if available)
+            email = '' if not emails else emails[0]
 
-                event.add_attendee(attendee)
+            # Build attendee object from email
+            attendee = ics.Attendee(email)
+
+            # Add name (= title, full name & department as string)
+            attendee.common_name = person
+
+            # Add attendee to event object
+            event.add_attendee(attendee)
 
         # Add event to calendar
         calendar.events.add(event)
