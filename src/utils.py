@@ -4,6 +4,8 @@ from hashlib import md5
 
 
 def create_path(path: str) -> None:
+    '''Creates directories for given file or directory'''
+
     # Import library
     import os
 
@@ -21,6 +23,8 @@ def create_path(path: str) -> None:
 
 
 def dedupe(duped_data, encoding='utf-8') -> list:
+    '''Removes duplicates from a given data structure'''
+
     codes = set()
     deduped_data = []
 
@@ -35,6 +39,8 @@ def dedupe(duped_data, encoding='utf-8') -> list:
 
 
 def load_json(json_file: BufferedReader):
+    '''Loads contents of given JSON file'''
+
     # Import library
     import json
 
@@ -50,6 +56,8 @@ def load_json(json_file: BufferedReader):
 
 
 def dump_csv(data: list, csv_file: str) -> None:
+    '''Stores data as given CSV file'''
+
     # Import library
     import pandas
 
@@ -59,12 +67,16 @@ def dump_csv(data: list, csv_file: str) -> None:
 
 
 def dump_json(data: list, json_file: str) -> None:
+    '''Stores data as given JSON file'''
+
     # Write data to JSON file
     with open(json_file, 'w') as file:
         dump(data, file, ensure_ascii=False, indent=4)
 
 
 def dump_ics(data: list, ics_file: str) -> None:
+    '''Stores data as given ICS file'''
+
     # Import libraries
     import os
     import ics
