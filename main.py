@@ -4,7 +4,8 @@ from os.path import join
 import click
 
 from src.sta import Sitzungsdienst
-from src.utils import create_path, dump_csv, dump_ics, dump_json, load_json
+from src.utils import create_path, dedupe
+from src.utils import dump_csv, dump_ics, dump_json, load_json
 
 
 @click.command()
@@ -94,6 +95,9 @@ def cli(source: BufferedReader, output: str, directory: str, file_format: str, q
         # Report saving the file
         if verbose > 0: click.echo('Saving file as "{}" ..'.format(output_file), nl=False)
 
+        # Remove duplicate entries
+        data = dedupe(data)
+
         # Write data as ..
         if file_format == 'csv':
             # (1) .. CSV
@@ -112,9 +116,6 @@ def cli(source: BufferedReader, output: str, directory: str, file_format: str, q
 
         # If verbose mode is activated ..
         if verbose > 1:
-            # Get data
-            data = sta.data
-
             # Add newline & delimiter
             click.echo()
             click.echo('----')
