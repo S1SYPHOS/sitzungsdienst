@@ -322,6 +322,4 @@ class Sitzungsdienst:
 
 
     def date_range(self) -> tuple:
-        data = sorted(self.data, key=itemgetter('date'))
-
-        return (data[0]['date'], data[-1]['date'])
+        return (self.data[0]['date'], self.data[-1]['date'])
