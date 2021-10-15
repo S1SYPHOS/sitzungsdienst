@@ -14,15 +14,15 @@ from src.utils import create_path, dump_csv, dump_ics, dump_json, load_json
 @click.option('-f', '--file-format', default='csv', help='File format, "csv", "json" or "ics".')
 @click.option('-q', '--query', multiple=True, help='Query assignees, eg for name, department.')
 @click.option('-i', '--inquiries', type=click.File('rb'), help='JSON file with parameters for automation.')
-@click.option('--verbose', '-v', is_flag=True, help='Enable verbose mode.')
+@click.option('--verbose', '-v', count=True, help='Enable verbose mode.')
 @click.version_option('1.4.1')
-def cli(source: BufferedReader, output: str, directory: str, file_format: str, query: str, verbose: bool, inquiries: BufferedReader) -> None:
+def cli(source: BufferedReader, output: str, directory: str, file_format: str, query: str, verbose: int, inquiries: BufferedReader) -> None:
     """Extract weekly assignments from SOURCE file."""
 
     # If file format is invalid ..
     if file_format.lower() not in ['csv', 'json', 'ics']:
         # (1) .. report falling back
-        click.echo('Invalid file format "{}", falling back to "csv".'.format(file_format))
+        if verbose > 0: click.echo('Invalid file format "{}", falling back to "csv".'.format(file_format))
 
         # (2) .. actually fall back
         file_format = 'csv'
@@ -33,7 +33,7 @@ def cli(source: BufferedReader, output: str, directory: str, file_format: str, q
     # If results are empty ..
     if not sta.data:
         # (1) .. report back
-        click.echo('No results found!')
+        if verbose > 0: click.echo('No results found!')
 
         # (2) .. abort further execution
         click.Context.abort('')
@@ -58,16 +58,18 @@ def cli(source: BufferedReader, output: str, directory: str, file_format: str, q
 
         # If query is present, filter data
         if request['query']:
-            # Make report on query human-readable
-            # (1) Build list of verbose search terms
-            query_report = ['{}) {}'.format(index + 1, term) for index, term in enumerate(request['query'])]
+            # If verbose mode is enabled ..
+            if verbose > 0:
+                # .. display query terms in human-readable fashion
+                # (1) Build list of verbose search terms
+                query_report = ['{}) {}'.format(index + 1, term) for index, term in enumerate(request['query'])]
 
-            # (2) Simplify report for single term
-            if len(query_report) == 1:
-                query_report = ['"{}"'.format(request['query'][0])]
+                # (2) Simplify report for single term
+                if len(query_report) == 1:
+                    query_report = ['"{}"'.format(request['query'][0])]
 
-            # (3) Report filtering
-            click.echo('Querying data for {} ..'.format(' '.join(query_report)), nl=False)
+                # (3) Report filtering
+                click.echo('Querying data for {} ..'.format(' '.join(query_report)), nl=False)
 
             # Filter data
             data = sta.filter(request['query'])
@@ -75,13 +77,13 @@ def cli(source: BufferedReader, output: str, directory: str, file_format: str, q
             # If results are empty ..
             if not data:
                 # (1) .. report failure
-                click.echo(' failed!')
+                if verbose > 0: click.echo(' failed!')
 
                 # (2) .. proceed with next request
                 continue
 
             # Report back
-            click.echo(' done.')
+            if verbose > 0: click.echo(' done.')
 
         # Build output path
         output_file = join(directory, '{}.{}'.format(request['output'].lower(), file_format))
@@ -90,7 +92,7 @@ def cli(source: BufferedReader, output: str, directory: str, file_format: str, q
         create_path(output_file)
 
         # Report saving the file
-        click.echo('Saving file as "{}" ..'.format(output_file), nl=False)
+        if verbose > 0: click.echo('Saving file as "{}" ..'.format(output_file), nl=False)
 
         # Write data as ..
         if file_format == 'csv':
@@ -106,10 +108,10 @@ def cli(source: BufferedReader, output: str, directory: str, file_format: str, q
             dump_ics(data, output_file)
 
         # Report back
-        click.echo(' done.')
+        if verbose > 0: click.echo(' done.')
 
         # If verbose mode is activated ..
-        if verbose:
+        if verbose > 1:
             # Get data
             data = sta.data
 
