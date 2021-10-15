@@ -1,7 +1,5 @@
 from io import BufferedReader
 from json import dump, dumps
-from hashlib import md5
-from datetime import datetime, timedelta
 
 
 def create_path(path: str) -> None:
@@ -57,6 +55,9 @@ def dump_ics(data: list, ics_file: str) -> None:
     import ics
     import pytz
 
+    from datetime import datetime, timedelta
+    from hashlib import md5
+
     # Define database file
     db_file = 'database.json'
 
@@ -73,6 +74,9 @@ def dump_ics(data: list, ics_file: str) -> None:
     # Create calendar object
     calendar = ics.Calendar(creator='S1SYPHOS')
 
+    # Determine timezone
+    timezone = pytz.timezone('Europe/Berlin')
+
     # Iterate over items
     for item in data:
         # Build event object
@@ -83,11 +87,11 @@ def dump_ics(data: list, ics_file: str) -> None:
 
         # (2) Define timezone, date & times
         time = datetime.strptime(item['date'] + item['when'], '%Y-%m-%d%H:%M')
-        begin = time.replace(tzinfo=pytz.timezone('Europe/Berlin'))
+        begin = time.replace(tzinfo=timezone)
         end = begin + timedelta(hours=1)
 
         # (3) Create event
-        event = ics.Event(name=name, begin=begin, end=end, uid=uid, location=location)
+        event = ics.Event(name=name, begin=begin, end=end, uid=uid, created=datetime.now(timezone), location=location)
 
         # (4) Add person as attendee
         for person in item['who'].split(';'):
