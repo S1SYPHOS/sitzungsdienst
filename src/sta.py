@@ -2,6 +2,8 @@ from io import BufferedReader
 from re import match, search
 from operator import itemgetter
 
+from src.utils import dedupe
+
 
 class Sitzungsdienst:
     def __init__(self, input_file: BufferedReader) -> None:
@@ -303,7 +305,7 @@ class Sitzungsdienst:
                     'what': detail[1],
                 })
 
-        return sorted(data, key=itemgetter('date', 'who', 'when', 'where', 'what'))
+        return sorted(dedupe(data), key=itemgetter('date', 'who', 'when', 'where', 'what'))
 
 
     def filter(self, query: list) -> list:

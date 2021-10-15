@@ -1,5 +1,6 @@
 from io import BufferedReader
 from json import dump, dumps
+from hashlib import md5
 
 
 def create_path(path: str) -> None:
@@ -17,6 +18,20 @@ def create_path(path: str) -> None:
         # Guard against race condition
         except OSError:
             pass
+
+
+def dedupe(duped_data, encoding='utf-8') -> list:
+    codes = set()
+    deduped_data = []
+
+    for item in duped_data:
+        hash_digest = md5(str(item).encode(encoding)).hexdigest()
+
+        if hash_digest not in codes:
+            codes.add(hash_digest)
+            deduped_data.append(item)
+
+    return deduped_data
 
 
 def load_json(json_file: BufferedReader):
@@ -56,7 +71,6 @@ def dump_ics(data: list, ics_file: str) -> None:
     import pytz
 
     from datetime import datetime, timedelta
-    from hashlib import md5
 
     # Define database file
     db_file = 'database.json'
