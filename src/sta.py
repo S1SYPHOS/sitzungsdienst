@@ -189,7 +189,7 @@ class Sitzungsdienst:
     def is_docket(self, string: str) -> bool:
         '''Checks whether string matches a docket number'''
 
-        if match(r'\d{3}\sU?Js\s\d+/\d{2}', string):
+        if match(r'\d{2,3}\sU?Js\s\d+/\d{2}', string):
             return True
 
         return False
