@@ -15,7 +15,7 @@ from src.utils import dump_csv, dump_ics, dump_json, load_json
 @click.option('-f', '--file-format', default='csv', help='File format, "csv", "json" or "ics".')
 @click.option('-q', '--query', multiple=True, help='Query assignees, eg for name, department.')
 @click.option('-i', '--inquiries', type=click.File('rb'), help='JSON file with parameters for automation.')
-@click.option('--verbose', '-v', count=True, help='Enable verbose mode.')
+@click.option('-v', '--verbose', count=True, help='Enable verbose mode.')
 @click.version_option('1.4.2')
 def cli(source: BufferedReader, output: str, directory: str, file_format: str, query: str, verbose: int, inquiries: BufferedReader) -> None:
     """Extract weekly assignments from SOURCE file."""
