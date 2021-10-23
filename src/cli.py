@@ -3,8 +3,8 @@ from pathlib import Path
 
 import click
 
-from src.sta import Sitzungsdienst
-from src.utils import dedupe, dump_csv, dump_ics, dump_json, load_json
+from .sta import Sitzungsdienst
+from .utils import dedupe, dump_csv, dump_ics, dump_json, load_json
 
 
 @click.command()

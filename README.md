@@ -6,14 +6,17 @@ A simple Python utility for converting the weekly assignment PDF by the "Staatsa
 
 ## Getting started
 
-Running `setup.sh` will install all dependencies inside a virtual environment, ready for action:
+Running `setup.bash` will install all dependencies inside a virtual environment, ready for action:
 
-```shell
+```bash
 # Set up & activate virtualenv
-virtualenv -p python3 venv && source venv/bin/activate
+virtualenv -p python3 venv
+
+# shellcheck disable=SC1091
+source venv/bin/activate
 
 # Install dependencies
-python3 -m pip install -r requirements.txt
+python -m pip install --editable .
 ```
 
 
@@ -22,21 +25,20 @@ python3 -m pip install -r requirements.txt
 Using this library is straightforward:
 
 ```text
-$ python main.py --help
-
-Usage: main.py [OPTIONS] SOURCE
+$ sta --help
+Usage: sta [OPTIONS] SOURCE
 
   Extract weekly assignments from SOURCE file.
 
 Options:
-  -o, --output-file PATH    Output filename, without extension.
-  -d, --directory PATH      Output directory.
+  -o, --output PATH         Output filename, without extension.
+  -d, --directory TEXT      Output directory.
   -f, --file-format TEXT    File format, "csv", "json" or "ics".
   -q, --query TEXT          Query assignees, eg for name, department.
   -i, --inquiries FILENAME  JSON file with parameters for automation.
   -v, --verbose             Enable verbose mode.
   --version                 Show the version and exit.
-  --help                    Show this message and exit.
+  --help                    Show this message and exit.```
 ```
 
 The following code snippet provides a **very basic** batch processing example:
@@ -46,7 +48,7 @@ The following code snippet provides a **very basic** batch processing example:
 
 # Create multiple calendar files at once
 for arg; do
-   python main.py -f ics -q "$arg" -o "$arg" source.pdf
+   sta -f ics -q "$arg" -o "$arg" source.pdf
 done
 ```
 
@@ -83,7 +85,7 @@ However, you might want to store these information inside a `json` file and pass
 ]
 ```
 
-The `output` property resembles the filename whereas `query` contains all search terms. Therefore, the first entry is equivalent to this command: `python main.py -o study-group -q 123 -q 456 -q 789 source.pdf`.
+The `output` property resembles the filename whereas `query` contains all search terms. Therefore, the first entry is equivalent to this command: `sta -o study-group -q 123 -q 456 -q 789 source.pdf`.
 
 
 **Happy coding!**
