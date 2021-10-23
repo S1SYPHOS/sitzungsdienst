@@ -1,11 +1,10 @@
 from io import BufferedReader
-from os.path import join
+from pathlib import Path
 
 import click
 
 from src.sta import Sitzungsdienst
-from src.utils import create_path, dedupe
-from src.utils import dump_csv, dump_ics, dump_json, load_json
+from src.utils import dedupe, dump_csv, dump_ics, dump_json, load_json
 
 
 @click.command()
@@ -86,11 +85,17 @@ def cli(source: BufferedReader, output: str, directory: str, file_format: str, q
             # Report back
             if verbose > 0: click.echo(' done.')
 
-        # Build output path
-        output_file = join(directory, '{}.{}'.format(request['output'].lower(), file_format))
-
         # Create output path (if necessary)
-        create_path(output_file)
+        Path(directory).mkdir(parents=True, exist_ok=True)
+
+        # Remove cached files first
+        # Loop over CSV, JSON & ICS files ..
+        for path in [file.resolve() for file in Path(directory).glob('**/*') if file.suffix in ['.csv', '.json', '.ics']]:
+            # .. deleting each on of them
+            path.unlink()
+
+        # Build output path
+        output_file = Path(directory, '{}.{}'.format(request['output'].lower(), file_format))
 
         # Report saving the file
         if verbose > 0: click.echo('Saving file as "{}" ..'.format(output_file), nl=False)

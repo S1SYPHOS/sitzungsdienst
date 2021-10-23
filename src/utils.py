@@ -3,25 +3,6 @@ from json import dump, dumps
 from hashlib import md5
 
 
-def create_path(path: str) -> None:
-    '''Creates directories for given file or directory'''
-
-    # Import library
-    import os
-
-    # Determine if (future) target is appropriate data file
-    if os.path.splitext(path)[1].lower() in ['.csv', '.json', '.ics']:
-        path = os.path.dirname(path)
-
-    if not os.path.exists(path):
-        try:
-            os.makedirs(path)
-
-        # Guard against race condition
-        except OSError:
-            pass
-
-
 def dedupe(duped_data, encoding='utf-8') -> list:
     '''Removes duplicates from a given data structure'''
 
