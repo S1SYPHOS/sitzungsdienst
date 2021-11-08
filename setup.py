@@ -7,7 +7,7 @@ with open('README.md', 'r', encoding='utf8') as file:
 # Define package metadata
 setuptools.setup(
     name='sitzungsdienst',
-    version='1.4.3',
+    version='1.4.4',
     author='Martin Folkers',
     author_email='hello@twobrain.io',
     description='A simple Python utility for converting the weekly assignment PDF by the "Staatsanwaltschaft Freiburg"',
