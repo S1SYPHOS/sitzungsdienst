@@ -51,6 +51,15 @@ def cli(source: BufferedReader, output: str, directory: str, file_format: str, q
         # .. load its content
         requests = load_json(inquiries)
 
+    # Create output path (if necessary)
+    Path(directory).mkdir(parents=True, exist_ok=True)
+
+    # Remove cached files first
+    # Loop over CSV, JSON & ICS files ..
+    for path in [file.resolve() for file in Path(directory).glob('**/*') if file.suffix in ['.csv', '.json', '.ics']]:
+        # .. deleting each on of them
+        path.unlink()
+
     # Iterate over requests
     for request in requests:
         # Get data
@@ -84,15 +93,6 @@ def cli(source: BufferedReader, output: str, directory: str, file_format: str, q
 
             # Report back
             if verbose > 0: click.echo(' done.')
-
-        # Create output path (if necessary)
-        Path(directory).mkdir(parents=True, exist_ok=True)
-
-        # Remove cached files first
-        # Loop over CSV, JSON & ICS files ..
-        for path in [file.resolve() for file in Path(directory).glob('**/*') if file.suffix in ['.csv', '.json', '.ics']]:
-            # .. deleting each on of them
-            path.unlink()
 
         # Build output path
         output_file = Path(directory, '{}.{}'.format(request['output'].lower(), file_format))
