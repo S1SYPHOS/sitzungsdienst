@@ -38,7 +38,7 @@ Options:
   -i, --inquiries FILENAME  JSON file with parameters for automation.
   -v, --verbose             Enable verbose mode.
   --version                 Show the version and exit.
-  --help                    Show this message and exit.```
+  --help                    Show this message and exit.
 ```
 
 The following code snippet provides a **very basic** batch processing example:

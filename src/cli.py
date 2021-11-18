@@ -144,7 +144,3 @@ def cli(source: BufferedReader, output: str, directory: str, file_format: str, q
 
                 # Add delimiter before each subsequent entry
                 click.echo('--')
-
-
-if __name__ == '__main__':
-    cli()
