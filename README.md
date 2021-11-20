@@ -36,6 +36,7 @@ Options:
   -f, --file-format TEXT    File format, "csv", "json" or "ics".
   -q, --query TEXT          Query assignees, eg for name, department.
   -i, --inquiries FILENAME  JSON file with parameters for automation.
+  -c, --clear-cache         Remove existing files in directory first.
   -v, --verbose             Enable verbose mode.
   --version                 Show the version and exit.
   --help                    Show this message and exit.

@@ -14,9 +14,10 @@ from .utils import dedupe, dump_csv, dump_ics, dump_json, load_json
 @click.option('-f', '--file-format', default='csv', help='File format, "csv", "json" or "ics".')
 @click.option('-q', '--query', multiple=True, help='Query assignees, eg for name, department.')
 @click.option('-i', '--inquiries', type=click.File('rb'), help='JSON file with parameters for automation.')
+@click.option('-c', '--clear-cache', is_flag=True, help='Remove existing files in directory first.')
 @click.option('-v', '--verbose', count=True, help='Enable verbose mode.')
 @click.version_option('1.4.4')
-def cli(source: BufferedReader, output: str, directory: str, file_format: str, query: str, verbose: int, inquiries: BufferedReader) -> None:
+def cli(source: BufferedReader, output: str, directory: str, file_format: str, query: str, inquiries: BufferedReader, clear_cache: bool, verbose: int) -> None:
     """Extract weekly assignments from SOURCE file."""
 
     # If file format is invalid ..
@@ -54,11 +55,12 @@ def cli(source: BufferedReader, output: str, directory: str, file_format: str, q
     # Create output path (if necessary)
     Path(directory).mkdir(parents=True, exist_ok=True)
 
-    # Remove cached files first
-    # Loop over CSV, JSON & ICS files ..
-    for path in [file.resolve() for file in Path(directory).glob('**/*') if file.suffix in ['.csv', '.json', '.ics']]:
-        # .. deleting each on of them
-        path.unlink()
+    # If enabled ..
+    if clear_cache:
+        # .. loop over CSV, JSON & ICS files ..
+        for path in [file.resolve() for file in Path(directory).glob('**/*') if file.suffix in ['.csv', '.json', '.ics']]:
+            # .. deleting each on of them
+            path.unlink()
 
     # Iterate over requests
     for request in requests:
