@@ -141,8 +141,7 @@ dmypy.json
 cython_debug/
 
 # Cache files
-/.~lock*
+/*.pdf
 /*.json
-/*.csv
-/*.ics
-/test/*.pdf
+/archive
+/tests/fixtures
