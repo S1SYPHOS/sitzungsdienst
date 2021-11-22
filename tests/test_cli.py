@@ -3,7 +3,7 @@ import glob
 import json
 
 from click.testing import CliRunner
-from src.cli import cli
+from sitzungsdienst.cli import cli
 
 
 def test_cli_no_argument():

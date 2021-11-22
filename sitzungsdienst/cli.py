@@ -45,8 +45,6 @@ def cli(source: BufferedReader, output: str, directory: str, file_format: str, q
         'query': query,
     }]
 
-    database = {}
-
     # If inquiries exist ..
     if inquiries:
         # .. load its content
