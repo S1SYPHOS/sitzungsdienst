@@ -16,7 +16,7 @@ from .utils import dedupe, dump_csv, dump_ics, dump_json, load_json
 @click.option('-i', '--inquiries', type=click.File('rb'), help='JSON file with parameters for automation.')
 @click.option('-c', '--clear-cache', is_flag=True, help='Remove existing files in directory first.')
 @click.option('-v', '--verbose', count=True, help='Enable verbose mode.')
-@click.version_option('1.4.6')
+@click.version_option('1.5.0')
 def cli(source: BufferedReader, output: str, directory: str, file_format: str, query: str, inquiries: BufferedReader, clear_cache: bool, verbose: int) -> None:
     """Extract weekly assignments from SOURCE file."""
 
