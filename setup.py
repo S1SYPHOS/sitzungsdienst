@@ -20,7 +20,7 @@ setuptools.setup(
     },
     entry_points='''
         [console_scripts]
-        sta=src.cli:cli
+        sta=sitzungsdienst.cli:cli
     ''',
     classifiers=[
         'Programming Language :: Python :: 3',
