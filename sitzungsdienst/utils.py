@@ -40,30 +40,30 @@ def dump_csv(data: list, csv_file: str) -> None:
     '''Stores data as given CSV file'''
 
     # Import library
-    import pandas
+    from pandas import DataFrame
 
     # Write data to CSV file
-    dataframe = pandas.DataFrame(data)
+    dataframe = DataFrame(data)
     dataframe.to_csv(csv_file, index=False)
 
 
-def dump_json(data: list, json_file: str) -> None:
+def dump_json(data: list, json_file: str, indent: int = 4) -> None:
     '''Stores data as given JSON file'''
 
     # Write data to JSON file
     with open(json_file, 'w') as file:
-        dump(data, file, ensure_ascii=False, indent=4)
+        dump(data, file, ensure_ascii=False, indent=indent)
 
 
-def dump_ics(data: list, ics_file: str) -> None:
-    '''Stores data as given ICS file'''
+def data2calendar(data: list):
+    '''Converts data to iCalendar string'''
 
     # Import libraries
     import os
-    import ics
-    import pytz
-
     from datetime import datetime, timedelta
+    from zoneinfo import ZoneInfo
+
+    from ics import Calendar, Event, Attendee
 
     # Define database file
     db_file = 'database.json'
@@ -79,10 +79,10 @@ def dump_ics(data: list, ics_file: str) -> None:
             database = load_json(file)
 
     # Create calendar object
-    calendar = ics.Calendar(creator='S1SYPHOS')
+    calendar = Calendar(creator='S1SYPHOS')
 
     # Determine timezone
-    timezone = pytz.timezone('Europe/Berlin')
+    timezone = ZoneInfo('Europe/Berlin')
 
     # Iterate over items
     for item in data:
@@ -92,7 +92,7 @@ def dump_ics(data: list, ics_file: str) -> None:
         end = begin + timedelta(hours=1)
 
         # Create event object
-        event = ics.Event(
+        event = Event(
             uid=md5(dumps(item).encode('utf-8')).hexdigest(),
             name='Sitzungsdienst ({})'.format(item['what']),
             created=datetime.now(timezone),
@@ -110,7 +110,7 @@ def dump_ics(data: list, ics_file: str) -> None:
             email = '' if not emails else emails[0]
 
             # Build attendee object from email
-            attendee = ics.Attendee(email)
+            attendee = Attendee(email)
 
             # Add name (= title, full name & department as string)
             attendee.common_name = person
@@ -121,6 +121,12 @@ def dump_ics(data: list, ics_file: str) -> None:
         # Add event to calendar
         calendar.events.add(event)
 
+    return calendar
+
+
+def dump_ics(data: list, ics_file: str):
+    '''Stores data as given ICS file'''
+
     # Write calendar object to ICS file
     with open(ics_file, 'w') as file:
-        file.writelines(calendar)
+        file.writelines(data2calendar(data))
