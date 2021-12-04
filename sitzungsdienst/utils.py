@@ -61,7 +61,13 @@ def data2calendar(data: list):
     # Import libraries
     import os
     from datetime import datetime, timedelta
-    from zoneinfo import ZoneInfo
+
+    # Add fallback for Python < v3.9
+    try:
+        import zoneinfo
+
+    except ImportError:
+        from backports import zoneinfo
 
     from ics import Calendar, Event, Attendee
 

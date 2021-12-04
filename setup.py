@@ -29,11 +29,11 @@ setuptools.setup(
     ],
     packages=setuptools.find_packages(),
     install_requires=[
+        'backports.zoneinfo',
         'click',
         'ics',
         'pandas',
         'pypdf2',
-        'pytz',
     ],
     python_requires='>=3.6',
 )
