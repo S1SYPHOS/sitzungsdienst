@@ -1,10 +1,13 @@
 from io import BufferedReader
-from json import dump, dumps
-from hashlib import md5
 
 
-def dedupe(duped_data, encoding='utf-8') -> list:
-    '''Removes duplicates from a given data structure'''
+def dedupe(duped_data, encoding: str = 'utf-8'):
+    """
+    Removes duplicates from a given data structure
+    """
+
+    # Import libraries
+    from hashlib import md5
 
     codes = set()
     deduped_data = []
@@ -20,46 +23,60 @@ def dedupe(duped_data, encoding='utf-8') -> list:
 
 
 def load_json(json_file: BufferedReader):
-    '''Loads contents of given JSON file'''
+    """
+    Loads contents of given JSON file
+    """
 
     # Import library
-    import json
+    from json import load
+    from json.decoder import JSONDecodeError
 
     # Attempt to ..
     try:
         # .. load JSON file object
-        return json.load(json_file)
+        return load(json_file)
 
     # .. otherwise
-    except json.decoder.JSONDecodeError:
+    except JSONDecodeError:
         # .. throw exception
         raise Exception
 
 
 def dump_csv(data: list, csv_file: str) -> None:
-    '''Stores data as given CSV file'''
+    """
+    Stores data as given CSV file
+    """
 
     # Import library
     from pandas import DataFrame
 
     # Write data to CSV file
     dataframe = DataFrame(data)
-    dataframe.to_csv(csv_file, index=False)
+    dataframe.to_csv(csv_file, index = False)
 
 
 def dump_json(data: list, json_file: str, indent: int = 4) -> None:
-    '''Stores data as given JSON file'''
+    """
+    Stores data as given JSON file
+    """
+
+    # Import libraries
+    from json import dump
 
     # Write data to JSON file
     with open(json_file, 'w') as file:
-        dump(data, file, ensure_ascii=False, indent=indent)
+        dump(data, file, ensure_ascii = False, indent = indent)
 
 
-def data2calendar(data: list):
-    '''Converts data to iCalendar string'''
+def data2calendar(data: list, duration: int = 1):
+    """
+    Converts data to iCalendar text
+    """
 
     # Import libraries
-    import os
+    from os.path import exists
+    from json import dumps
+    from hashlib import md5
     from datetime import datetime, timedelta
 
     # Add fallback for Python < v3.9
@@ -78,33 +95,33 @@ def data2calendar(data: list):
     database = {}
 
     # If database file exists ..
-    if os.path.exists(db_file):
+    if exists(db_file):
         # open it and ..
         with open(db_file, 'r') as file:
             # .. load its contents
             database = load_json(file)
 
     # Create calendar object
-    calendar = Calendar(creator='S1SYPHOS')
+    calendar = Calendar(creator = 'S1SYPHOS')
 
     # Determine timezone
-    timezone = ZoneInfo('Europe/Berlin')
+    timezone = zoneinfo.ZoneInfo('Europe/Berlin')
 
     # Iterate over items
     for item in data:
         # Define timezone, date & times
         time = datetime.strptime(item['date'] + item['when'], '%Y-%m-%d%H:%M')
-        begin = time.replace(tzinfo=timezone)
-        end = begin + timedelta(hours=1)
+        begin = time.replace(tzinfo = timezone)
+        end = begin + timedelta(hours = duration)
 
         # Create event object
         event = Event(
-            uid=md5(dumps(item).encode('utf-8')).hexdigest(),
-            name='Sitzungsdienst ({})'.format(item['what']),
-            created=datetime.now(timezone),
-            begin=begin,
-            end=end,
-            location=item['where']
+            uid = md5(dumps(item).encode('utf-8')).hexdigest(),
+            name = 'Sitzungsdienst ({})'.format(item['what']),
+            created = datetime.now(timezone),
+            begin = begin,
+            end = end,
+            location = item['where']
         )
 
         # Add assignee(s) as attendee(s)
@@ -130,8 +147,10 @@ def data2calendar(data: list):
     return calendar
 
 
-def dump_ics(data: list, ics_file: str):
-    '''Stores data as given ICS file'''
+def dump_ics(data: list, ics_file: str) -> None:
+    """
+    Stores data as given ICS file
+    """
 
     # Write calendar object to ICS file
     with open(ics_file, 'w') as file:

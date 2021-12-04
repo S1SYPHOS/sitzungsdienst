@@ -4,25 +4,25 @@ from operator import itemgetter
 
 
 class Sitzungsdienst:
-    '''
+    """
     This class represents the weekly assignments of a single
     PDF file as published by the Staatsanwaltschaft Freiburg
-    '''
+    """
 
     def __init__(self, input_file: BufferedReader) -> None:
-        '''
+        """
         Parses & processes the given file object,
         storing the result as the `data` property
-        '''
+        """
 
         self.data = self.extract_data(input_file)
 
 
     def process_pages(self, pages: list) -> dict:
-        '''
+        """
         Processes PDF content per-page,
         returning its contents per-date
-        '''
+        """
 
         # Create data array
         data = {}
@@ -79,10 +79,10 @@ class Sitzungsdienst:
 
 
     def process_data(self, source: dict) -> list:
-        '''
+        """
         Processes preprocessed per-date data,
         returning data records for each court
-        '''
+        """
 
         # Create data array
         unprocessed = []
@@ -160,7 +160,9 @@ class Sitzungsdienst:
 
 
     def is_court(self, string: str) -> bool:
-        '''Checks whether string denotes a court'''
+        """
+        Checks whether string denotes a court
+        """
 
         if match(r'(?:AG|LG)\s', string):
             return True
@@ -169,7 +171,9 @@ class Sitzungsdienst:
 
 
     def is_person(self, string: str) -> bool:
-        '''Checks whether string indicates a person'''
+        """
+        Checks whether string indicates a person
+        """
 
         if search(r'(?:E?(?:O?StA|OAA)|Ref)(?:\'in)?', string):
             return True
@@ -178,7 +182,9 @@ class Sitzungsdienst:
 
 
     def is_time(self, string: str) -> bool:
-        '''Checks whether string matches a time'''
+        """
+        Checks whether string matches a time
+        """
 
         if match(r'\d{2}:\d{2}', string):
             return True
@@ -187,7 +193,9 @@ class Sitzungsdienst:
 
 
     def is_docket(self, string: str) -> bool:
-        '''Checks whether string matches a docket number'''
+        """
+        Checks whether string matches a docket number
+        """
 
         if match(r'\d{2,3}\sU?Js\s\d+/\d{2}', string):
             return True
@@ -196,13 +204,17 @@ class Sitzungsdienst:
 
 
     def reverse_date(self, string: str, separator: str='-') -> str:
-        '''Reverts a given date using `separator` as separator'''
+        """
+        Reverts a given date using `separator` as separator
+        """
 
         return separator.join(reversed(string.split('.')))
 
 
     def format_person(self, data: list) -> str:
-        '''Converts a list of people to a human-readable string'''
+        """
+        Converts a list of people to a human-readable string
+        """
 
         # Form complete string
         string = ' '.join(data)
@@ -252,10 +264,10 @@ class Sitzungsdienst:
 
 
     def extract_data(self, pdf_file: BufferedReader) -> list:
-        '''
+        """
         Extracts data from PDF file, utilizing all of the
         above functions & returning the processed results
-        '''
+        """
 
         # Import library
         import PyPDF2
@@ -344,10 +356,10 @@ class Sitzungsdienst:
 
 
     def filter(self, query: list) -> list:
-        '''
+        """
         Filters the currently stored data by each
         `query`term, returning the search results
-        '''
+        """
 
         # Create data buffer
         buffer = []
@@ -362,6 +374,6 @@ class Sitzungsdienst:
 
 
     def date_range(self) -> tuple:
-        '''Determines date range for the currently stored data'''
+        """Determines date range for the currently stored data"""
 
         return (self.data[0]['date'], self.data[-1]['date'])
